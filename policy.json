@@ -1,0 +1,35 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:GetObject",
+				"s3:ListBucket"
+			],
+			"Resource": [
+				"arn:aws:s3:::jd-practice-bucket/data/*"
+			]
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"s3:PutObject"
+			],
+			"Resource": [
+				"arn:aws:s3:::jd-practice-bucket/logs/*"
+			]
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"execute-api:Invoke"
+			],
+			"Resource": [
+				"arn:aws:execute-api:us-east-1:269886498086:dv6rqvmho7/*/*/*"
+			]
+		}
+	]
+}
+
+" THIS IS AN EXAMPLE"

@@ -17,7 +17,7 @@ def read_csv_from_s3(s3_bucket_name,key):
 #This function help us to check if the payload has the minimum requirements.
 def validation_hired_employees(rows,batch_id):
     pass_=1
-    logs=[['Batch_Id','Row','Error']]
+    logs=[['Batch_Id','Row','Errors']]
     for row in rows:
         row=row.split(',')
     
@@ -73,29 +73,37 @@ def validation_hired_employees(rows,batch_id):
     
 def validation_departments_or_jobs(rows,batch_id):
     pass_=1
+    logs=[['Batch_Id','Row','Errors']]
     for row in rows:
         row=row.split(',')
         if len(row) == 2:
             first_column = row[0]
             second_column = row[1]
-
+            log=[batch_id,str(row),[]]
             # Validate the first column as an integer
             try:
                 first_column = int(first_column)
             except ValueError:
-                print("Validation Error: First value should be an integer")
+                log[2].append("Validation Error: First value should be an integer")
                 pass_=0
+                
 
             # Validate the second column as a string
             if not isinstance(second_column, str):
-                print("Validation Error: Second value should be a string")
+                log[2].append("Validation Error: Second value should be a string")
                 pass_=0
         else:
-            print("Validation Error: Data malformed, more or less than the fields expected")
+            log[2].append("Validation Error: Data malformed, more or less than the fields expected")
             pass_=0
             
-    return pass_
-
+        #We append the log for each row
+        logs.append(log)
+            
+    if pass_==1:
+        return pass_
+    else:
+        return logs
+        
 def write_csv_to_s3(bucket_name, file_key, file_path):
     s3 = boto3.client('s3')
     s3.upload_file(file_path, bucket_name, file_key)
@@ -111,45 +119,60 @@ def transform_list_to_csv(list_of_lists):
 
     return temp_file.name
     
-
 def lambda_handler(event, context):
     # Extract the file name from the event
-    #s3_bucket_name=event['Records'][0]['s3']['bucket']['name']
-    #key = event['Records'][0]['s3']['object']['key']
+    s3_bucket_name=event['Records'][0]['s3']['bucket']['name']
+    key = event['Records'][0]['s3']['object']['key']
     # Write the bucket name
-    s3_bucket_name = 'jd-practice-bucket'
-    key='data/hired_employees.csv'
+    #s3_bucket_name = 'jd-practice-bucket'
+    #key='data/departments.csv'
     
     apigateway = boto3.client('apigateway')
     rows= read_csv_from_s3(s3_bucket_name,key)
     
     if key=='data/hired_employees.csv':
         validation=1
-    else:
+    elif key=='data/departments.csv':
         validation=2
+    elif key=='data/jobs.csv':
+        validation=3
+    else:
+        validation=0
         
-    # Split data into batches of 1000 rows
-    batch_size = 50
-    batches = [rows[i:i+batch_size] for i in range(0, len(rows), batch_size)]
-    
-    for batch_id, batch in enumerate(batches):
-        batch_id+=1
-        if validation==1:
-            result=validation_hired_employees(batch,batch_id)
-            if result==1:
-                print(batch_id,'PASS_PAYLOAD')
+    if validation != 0:
+        # Split data into batches of 1000 rows
+        batch_size = 50
+        batches = [rows[i:i+batch_size] for i in range(0, len(rows), batch_size)]
+        
+        for batch_id, batch in enumerate(batches):
+            batch_id+=1
+            if validation==1:
+                result=validation_hired_employees(batch,batch_id)
+                if result==1:
+                    # HERE WE NEED TO CHARGE THE PAYLOAD INTO API GATEWAY
+                    print(batch_id,'PASS_PAYLOAD')
+                else:
+                    # Transform list of lists to CSV
+                    csv_file_path = transform_list_to_csv(result)
+                    # Write CSV file to S3
+                    timestamp=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    batch_id_str=str(batch_id)
+                    file_key = f"logs/errors_hired_employees_batch-{batch_id_str}_{timestamp}.csv"
+                    write_csv_to_s3(s3_bucket_name, file_key, csv_file_path)
             else:
-                # Transform list of lists to CSV
-                csv_file_path = transform_list_to_csv(result)
-                # Write CSV file to S3
-                timestamp=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                batch_id_str=str(batch_id)
-                file_key = f"logs/errors_hired_employees_batch-{batch_id_str}_{timestamp}.csv"
-                write_csv_to_s3(s3_bucket_name, file_key, csv_file_path)
-
-                
-        
-    
-    
- 
-    
+                result=validation_departments_or_jobs(batch,batch_id)
+                if result==1:
+                    # HERE WE NEED TO CHARGE THE PAYLOAD INTO API GATEWAY
+                    print(batch_id,'PASS_PAYLOAD')
+                else:
+                    if validation==2:
+                        name='departments'
+                    else:
+                        name='jobs'
+                    # Transform list of lists to CSV
+                    csv_file_path = transform_list_to_csv(result)
+                    # Write CSV file to S3
+                    timestamp=datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    batch_id_str=str(batch_id)
+                    file_key = f"logs/errors_{name}_batch-{batch_id_str}_{timestamp}.csv"
+                    write_csv_to_s3(s3_bucket_name, file_key, csv_file_path)

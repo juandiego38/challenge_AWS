@@ -33,7 +33,7 @@ def lambda_handler(event, context):
     # Extract the file name from the event
     s3_bucket_name=event['Records'][0]['s3']['bucket']['name']
     key = event['Records'][0]['s3']['object']['key']
-    # Write the bucket name
+    # This in case to test 
     #s3_bucket_name = 'jd-practice-bucket'
     #key='data/hired_employees.csv'
 

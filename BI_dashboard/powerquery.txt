@@ -1,0 +1,6 @@
+let
+    source = Json.Document(Web.Contents("API_URL")),
+    json = Json.Document(source),
+    table = Table.FromRecords(json)
+in
+    table

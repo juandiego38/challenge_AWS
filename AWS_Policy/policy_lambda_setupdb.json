@@ -1,0 +1,30 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "AllowRDSManagement",
+        "Effect": "Allow",
+        "Action": [
+          "rds:CreateDBInstance",
+          "rds:DescribeDBInstances",
+          "rds:DeleteDBInstance",
+          "rds:ModifyDBInstance"
+        ],
+        "Resource": "*"
+      },
+      {
+        "Sid": "AllowDatabaseAccess",
+        "Effect": "Allow",
+        "Action": [
+          "rds-db:connect",
+          "rds-data:ExecuteSql",
+          "rds-data:ExecuteStatement",
+          "rds-data:BatchExecuteStatement"
+        ],
+        "Resource": [
+          "arn:aws:rds-db:us-east-1:269886498086:dbuser:test-migration-db/migrationuser",
+          "arn:aws:rds:us-east-1:269886498086:db:test-migration-db"
+        ]
+      }
+    ]
+  }

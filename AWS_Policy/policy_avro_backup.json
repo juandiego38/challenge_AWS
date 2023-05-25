@@ -1,0 +1,32 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "S3WriteAccess",
+			"Effect": "Allow",
+			"Action": [
+				"s3:PutObject"
+			],
+			"Resource": "arn:aws:s3:::jd-practice-bucket/backups_tables/*"
+		},
+		{
+			"Sid": "RDSReadAccess",
+			"Effect": "Allow",
+			"Action": [
+				"rds:DescribeDBInstances",
+				"rds:DescribeDBClusters",
+				"rds:DescribeDBClusterSnapshots",
+				"rds:DescribeDBSnapshotAttributes",
+				"rds:DescribeDBSnapshots",
+				"rds:ListTagsForResource",
+				"rds:ListTagsForResource"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": "ssm:GetParametersByPath",
+			"Resource": "arn:aws:ssm:us-east-1:269886498086:parameter/RDS/test-migration-db/*"
+		}
+	]
+}

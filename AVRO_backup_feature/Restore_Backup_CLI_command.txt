@@ -1,6 +1,6 @@
 #FIRST - translate the payload into base64
 echo -n '{"GO": "start"}' | base64
 
-It returns: eyJHTyI6ICJzdGFydCJ9
+#It returns: eyJHTyI6ICJzdGFydCJ9
 
 aws lambda invoke --function-name RestoreAVROBackup --payload 'eyJHTyI6ICJzdGFydCJ9' output.txt
